@@ -1,4 +1,4 @@
-const CACHE_NAME = 'parle-v5-offline';
+const CACHE_NAME = 'parle-v7-groq';
 const ASSETS = [
   '/',
   '/index.html',
@@ -25,7 +25,6 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((cached) => {
       return cached || fetch(e.request).catch(() => {
-        // При отсутствии интернета отдаём закэшированный index.html
         if (e.request.mode === 'navigate') {
           return caches.match('/index.html');
         }
