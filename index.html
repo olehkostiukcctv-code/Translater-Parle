@@ -193,10 +193,10 @@
     <div class="home-card primary" onclick="startSession('phone')">
       <div class="card-top">
         <span class="card-icon">📞</span>
-        <span class="card-badge">RU ➔ FR</span>
+        <span class="card-badge">RU ↔ FR</span>
       </div>
       <div class="card-title">Начать звонок</div>
-      <div class="card-sub">Громкая связь + наушники. Перевод на лету.</div>
+      <div class="card-sub">Мгновенный авто-перевод речи в обе стороны.</div>
     </div>
 
     <div class="home-card secondary" onclick="startSession('face')">
@@ -205,7 +205,7 @@
         <span class="card-badge">RU ↔ FR</span>
       </div>
       <div class="card-title">Очно</div>
-      <div class="card-sub">Два человека, один телефон</div>
+      <div class="card-sub">Два человека, один телефон (ручное переключение)</div>
     </div>
   </div>
 
@@ -344,7 +344,8 @@
   <script>
     let activeSession = false;
     let sessionType = 'phone';
-    let activeMode = null; // 'RU', 'FR', or null
+    let activeMode = null; // 'AUTO', 'RU', 'FR', or null
+    let phoneAutoLang = 'ru-RU'; // Переключатель очерёдности для авто-перевода в звонке
     let isSpeakingTTS = false;
     let seconds = 0;
     let timerInterval = null;
@@ -363,12 +364,36 @@
         const text = event.results[0][0].transcript;
         if (!text || !text.trim()) return;
 
-        const mode = activeMode;
-        if (mode === 'FR') {
+        if (activeMode === 'AUTO') {
+          // Определяем язык по содержимому и раскладке распознавания
+          const hasLatin = /[a-zA-ZàâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ]/.test(text);
+          const hasCyrillic = /[а-яА-ЯёЁ]/.test(text);
+
+          let isFrench = false;
+          if (hasLatin && !hasCyrillic) {
+            isFrench = true;
+          } else if (hasCyrillic && !hasLatin) {
+            isFrench = false;
+          } else {
+            isFrench = (phoneAutoLang === 'fr-FR');
+          }
+
+          if (isFrench) {
+            const translated = await translateText(text, 'fr', 'ru');
+            addMsg('СОБЕСЕДНИК · FR', text, translated);
+            phoneAutoLang = 'ru-RU'; // Следующий шаг — слушаем вас
+            speak(translated, 'ru-RU');
+          } else {
+            const translated = await translateText(text, 'ru', 'fr');
+            addMsg('ВЫ · RU', text, translated);
+            phoneAutoLang = 'fr-FR'; // Следующий шаг — слушаем француза
+            speak(translated, 'fr-FR');
+          }
+        } else if (activeMode === 'FR') {
           const translated = await translateText(text, 'fr', 'ru');
           addMsg('СОБЕСЕДНИК · FR', text, translated);
           speak(translated, 'ru-RU');
-        } else if (mode === 'RU') {
+        } else if (activeMode === 'RU') {
           const translated = await translateText(text, 'ru', 'fr');
           addMsg('ВЫ · RU', text, translated);
           speak(translated, 'fr-FR');
@@ -379,7 +404,12 @@
         if (activeMode && !isSpeakingTTS) {
           setTimeout(() => {
             if (activeMode && !isSpeakingTTS) {
-              try { recognition.start(); } catch(e) {}
+              try { 
+                if (activeMode === 'AUTO') {
+                  recognition.lang = phoneAutoLang;
+                }
+                recognition.start(); 
+              } catch(e) {}
             }
           }, 250);
         } else {
@@ -391,7 +421,12 @@
         if (activeMode && !isSpeakingTTS) {
           setTimeout(() => {
             if (activeMode && !isSpeakingTTS) {
-              try { recognition.start(); } catch(e) {}
+              try { 
+                if (activeMode === 'AUTO') {
+                  recognition.lang = phoneAutoLang;
+                }
+                recognition.start(); 
+              } catch(e) {}
             }
           }, 400);
         } else {
@@ -410,7 +445,26 @@
       loadVoices();
     }
 
-    // Запуск/Остановка режимов
+    // Обработка кнопки «Говорите» в Звонке (Мгновенный двуязычный разговор)
+    function toggleSpeakRU() {
+      if (sessionType === 'phone') {
+        if (activeMode === 'AUTO') {
+          activeMode = null;
+          try { recognition.stop(); } catch(e){}
+          updateUIState();
+        } else {
+          activeMode = 'AUTO';
+          phoneAutoLang = 'ru-RU';
+          if (recognition) recognition.lang = 'ru-RU';
+          updateUIState();
+          try { recognition.start(); } catch(e){}
+        }
+      } else {
+        toggleMode('RU', 'ru-RU');
+      }
+    }
+
+    // Ручные режимы
     function toggleMode(mode, lang) {
       if (!recognition) {
         alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome.');
@@ -429,12 +483,11 @@
       }
     }
 
-    function toggleSpeakRU() { toggleMode('RU', 'ru-RU'); }
     function toggleListenFR() { toggleMode('FR', 'fr-FR'); }
     function toggleFaceRU() { toggleMode('RU', 'ru-RU'); }
     function toggleFaceFR() { toggleMode('FR', 'fr-FR'); }
 
-    // Защищенная функция обновления интерфейса (без ошибок в консоли)
+    // Обновление интерфейса
     function updateUIState() {
       const speakBtn = document.getElementById('speakBtn');
       const btnListenThem = document.getElementById('btnListenThem');
@@ -451,10 +504,15 @@
       if (btnFaceFR) btnFaceFR.classList.remove('active');
       if (statusDot) statusDot.classList.remove('active');
 
-      if (activeMode === 'RU') {
+      if (activeMode === 'AUTO') {
+        speakBtn.classList.add('active');
+        speakBtn.innerText = 'Мгновенный перевод (Стоп)';
+        if (statusDot) statusDot.classList.add('active');
+        statusText.innerHTML = `<span class="status-dot active"></span>Мгновенный разговор (RU ↔ FR)...`;
+      } else if (activeMode === 'RU') {
         speakBtn.classList.add('active');
         if (btnFaceRU) btnFaceRU.classList.add('active');
-        speakBtn.innerText = 'Запись... (Нажмите стоп)';
+        speakBtn.innerText = 'Запись... (Стоп)';
         if (statusDot) statusDot.classList.add('active');
         statusText.innerHTML = `<span class="status-dot active"></span>Слушаю вас (RU)...`;
       } else if (activeMode === 'FR') {
@@ -499,12 +557,14 @@
         document.getElementById('faceControlBox').style.display = 'none';
         document.getElementById('modeNoticeHeader').innerText = 'ИНСТРУКЦИЯ';
         document.getElementById('modeNoticeText').innerText = 'Поставьте звонок на громкую связь. Наушники — вам, динамик — собеседнику.';
+        document.getElementById('hintSub').innerText = 'Мгновенный перевод: переводит RU ➔ FR и FR ➔ RU автоматически.';
       } else {
         document.getElementById('btnListenThem').style.display = 'none';
         document.getElementById('phoneControlBox').style.display = 'none';
         document.getElementById('faceControlBox').style.display = 'flex';
         document.getElementById('modeNoticeHeader').innerText = 'ОЧНЫЙ РЕЖИМ';
         document.getElementById('modeNoticeText').innerText = 'Положите телефон между вами. Нажимайте свою кнопку перед фразой.';
+        document.getElementById('hintSub').innerText = 'Вы — RU. Им уйдёт FR в динамик.';
       }
 
       startTimer();
@@ -545,7 +605,7 @@
       document.getElementById('inputDrawer').classList.toggle('active');
     }
 
-    // Рабочий Google Translate API
+    // Google Translate API
     async function translateText(text, sl, tl) {
       try {
         const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`);
@@ -581,7 +641,14 @@
         isSpeakingTTS = false;
         if (activeMode) {
           setTimeout(() => {
-            if (activeMode) try { recognition.start(); } catch(e){}
+            if (activeMode) {
+              try { 
+                if (activeMode === 'AUTO') {
+                  recognition.lang = phoneAutoLang;
+                }
+                recognition.start(); 
+              } catch(e){}
+            }
           }, 300);
         }
       };
