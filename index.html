@@ -21,7 +21,6 @@
 
     body { display: flex; flex-direction: column; }
     
-    /* Header */
     header {
       flex-shrink: 0;
       padding: 12px 18px;
@@ -30,6 +29,7 @@
       align-items: center;
       border-bottom: 1px solid #1f1f24;
       background: #121215;
+      z-index: 10;
     }
     .subtitle { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #8e8e93; font-weight: 700; margin-bottom: 2px; }
     .title { font-size: 18px; font-weight: 600; letter-spacing: -0.4px; }
@@ -38,22 +38,21 @@
     .timer { font-size: 13px; font-weight: 500; color: #8e8e93; font-family: monospace; display: none; }
     .end-btn { background: #26262e; border: 1px solid #32323e; color: #e55858; border-radius: 14px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: none; }
 
-    /* Screens */
     .screen {
       flex: 1;
       min-height: 0;
       display: none;
       flex-direction: column;
       padding: 16px;
+      overflow-y: auto;
     }
     .screen.active { display: flex; }
 
-    /* Home Screen */
     .home-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #636366; font-weight: 700; margin-bottom: 12px; }
     .home-title { font-size: 26px; font-weight: 500; line-height: 1.25; letter-spacing: -0.5px; margin-bottom: 12px; color: #f3f3f5; }
     .home-desc { font-size: 13px; color: #8e8e93; line-height: 1.5; margin-bottom: 24px; }
     
-    .home-card { border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; cursor: pointer; }
+    .home-card { border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; cursor: pointer; position: relative; z-index: 5; }
     .home-card.primary { background: #e6dfd5; color: #121215; }
     .home-card.secondary { background: #1c1c22; border: 1px solid #282830; color: #f3f3f5; }
     
@@ -63,7 +62,6 @@
     .card-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.3px; }
     .card-sub { font-size: 12px; opacity: 0.75; line-height: 1.3; }
 
-    /* Active Translation Screen */
     .status-banner {
       flex-shrink: 0;
       background: #1a1a20;
@@ -101,12 +99,12 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      z-index: 10;
     }
     .top-actions { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
     .pill-btn { background: #22222a; border: 1px solid #32323e; color: #d1d1d6; padding: 8px 12px; border-radius: 16px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; }
     .pill-btn.active { background: #e55858; color: #fff; border-color: #e55858; }
 
-    /* Buttons */
     .main-speak-btn { 
       width: 100%; 
       height: 50px; 
@@ -143,7 +141,6 @@
     .text-input { flex: 1; background: #22222a; border: 1px solid #32323e; border-radius: 10px; padding: 8px 10px; color: #fff; font-size: 13px; outline: none; }
     .send-btn { background: #32323e; color: #fff; border: none; border-radius: 10px; padding: 0 12px; font-size: 12px; cursor: pointer; }
 
-    /* Phrases Screen */
     .phrases-header { margin-bottom: 12px; }
     .phrases-header h2 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
     .phrases-header p { font-size: 12px; color: #8e8e93; line-height: 1.4; }
@@ -153,7 +150,6 @@
     .phrase-fr { font-size: 11px; color: #8e8e93; }
     .play-icon { width: 28px; height: 28px; border-radius: 50%; background: #262630; display: flex; align-items: center; justify-content: center; color: #f3f3f5; flex-shrink: 0; font-size: 12px; }
 
-    /* Bottom Navigation Bar */
     nav {
       flex-shrink: 0;
       background: #121215;
@@ -161,6 +157,7 @@
       display: flex;
       justify-content: space-around;
       padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+      z-index: 100;
     }
     .nav-item { background: none; border: none; color: #636366; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; cursor: pointer; }
     .nav-item.active { color: #f3f3f5; }
@@ -169,7 +166,6 @@
 </head>
 <body>
 
-  <!-- HEADER -->
   <header>
     <div>
       <div class="subtitle" id="headerSub">ПЕРЕВОДЧИК PARLÉ</div>
@@ -182,7 +178,7 @@
     </div>
   </header>
 
-  <!-- SCREEN 1: HOME -->
+  <!-- HOME SCREEN -->
   <div class="screen active" id="screenHome">
     <div class="home-tag">РУССКИЙ · FRANÇAIS</div>
     <h1 class="home-title">Говорите по-русски.<br>Они слышат французский.</h1>
@@ -207,7 +203,7 @@
     </div>
   </div>
 
-  <!-- SCREEN 2: ACTIVE SESSION -->
+  <!-- ACTIVE TRANSLATION SCREEN -->
   <div class="screen" id="screenCall">
     <div class="status-banner">
       <span id="statusText"><span class="status-dot" id="statusDot"></span>Готов к работе</span>
@@ -235,12 +231,10 @@
         <button class="pill-btn" onclick="sayIntro()">Представиться</button>
       </div>
 
-      <!-- Кнопка для режима Звонок -->
       <div id="phoneControlBox">
         <button class="main-speak-btn" id="speakBtn" onclick="toggleSpeakRU()">Говорите</button>
       </div>
 
-      <!-- Раздельные кнопки для режима Очно -->
       <div id="faceControlBox" class="two-btn-row" style="display: none;">
         <button class="half-speak-btn" id="btnFaceRU" onclick="toggleFaceRU()">Я</button>
         <button class="half-speak-btn" id="btnFaceFR" onclick="toggleFaceFR()">France</button>
@@ -250,7 +244,7 @@
     </div>
   </div>
 
-  <!-- SCREEN 3: PHRASES -->
+  <!-- PHRASES SCREEN -->
   <div class="screen" id="screenPhrases">
     <div class="phrases-header">
       <h2>Готовые фразы</h2>
@@ -292,7 +286,7 @@
     </div>
   </div>
 
-  <!-- SCREEN 4: JOURNAL -->
+  <!-- JOURNAL SCREEN -->
   <div class="screen" id="screenJournal">
     <div class="phrases-header">
       <h2>Журнал разговоров</h2>
@@ -301,7 +295,7 @@
     <div class="chat-list" id="journalList"></div>
   </div>
 
-  <!-- SCREEN 5: HOW IT WORKS -->
+  <!-- HOW IT WORKS SCREEN -->
   <div class="screen" id="screenHow">
     <div class="phrases-header">
       <h2>Как это работает</h2>
@@ -344,7 +338,7 @@
   <script>
     let activeSession = false;
     let sessionType = 'phone';
-    let currentMode = null; // 'RU', 'FR', or null
+    let currentMode = null;
     let isListening = false;
     let isSpeakingTTS = false;
     let seconds = 0;
@@ -354,7 +348,7 @@
 
     function loadVoices() {
       if ('speechSynthesis' in window) {
-        voices = window.speechSynthesis.getVoices();
+        try { voices = window.speechSynthesis.getVoices(); } catch(e){}
       }
     }
     if ('speechSynthesis' in window) {
@@ -365,65 +359,69 @@
     function initSpeech() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Ваш браузер не поддерживает голосовой ввод. Откройте сайт в Google Chrome.");
+        alert("Ваш браузер не поддерживает голосовой ввод. Пожалуйста, откройте сайт в Google Chrome.");
         return false;
       }
 
-      recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      try {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
 
-      recognition.onresult = async (event) => {
-        const text = event.results[0][0].transcript;
-        if (!text || !text.trim()) return;
+        recognition.onresult = async (event) => {
+          const text = event.results[0][0].transcript;
+          if (!text || !text.trim()) return;
 
-        const mode = currentMode;
-        if (mode === 'FR') {
-          const translated = await translateText(text, 'fr', 'ru');
-          addMsg('СОБЕСЕДНИК · FR', text, translated);
-          speak(translated, 'ru-RU');
-        } else if (mode === 'RU') {
-          const translated = await translateText(text, 'ru', 'fr');
-          addMsg('ВЫ · RU', text, translated);
-          speak(translated, 'fr-FR');
-        }
-      };
+          const mode = currentMode;
+          if (mode === 'FR') {
+            const translated = await translateText(text, 'fr', 'ru');
+            addMsg('СОБЕСЕДНИК · FR', text, translated);
+            speak(translated, 'ru-RU');
+          } else if (mode === 'RU') {
+            const translated = await translateText(text, 'ru', 'fr');
+            addMsg('ВЫ · RU', text, translated);
+            speak(translated, 'fr-FR');
+          }
+        };
 
-      recognition.onend = () => {
-        if (isListening && currentMode && !isSpeakingTTS) {
-          setTimeout(() => {
-            if (isListening && currentMode && !isSpeakingTTS) {
-              try { recognition.start(); } catch(e) {}
-            }
-          }, 300);
-        } else {
-          updateUIState();
-        }
-      };
+        recognition.onend = () => {
+          if (isListening && currentMode && !isSpeakingTTS) {
+            setTimeout(() => {
+              if (isListening && currentMode && !isSpeakingTTS) {
+                try { recognition.start(); } catch(e) {}
+              }
+            }, 300);
+          } else {
+            updateUIState();
+          }
+        };
 
-      recognition.onerror = (e) => {
-        if (e.error === 'not-allowed') {
-          alert('Заблокирован микрофон. Разрешите доступ к микрофону в настройках браузера!');
-          stopListening();
-          return;
-        }
-        if (isListening && currentMode && !isSpeakingTTS) {
-          setTimeout(() => {
-            if (isListening && currentMode && !isSpeakingTTS) {
-              try { recognition.start(); } catch(err) {}
-            }
-          }, 400);
-        }
-      };
+        recognition.onerror = (e) => {
+          if (e.error === 'not-allowed') {
+            alert('Браузер заблокировал доступ к микрофону. Нажмите на значок замка/настроек в адресной строке и разрешите доступ к микрофону!');
+            stopListening();
+            return;
+          }
+          if (isListening && currentMode && !isSpeakingTTS) {
+            setTimeout(() => {
+              if (isListening && currentMode && !isSpeakingTTS) {
+                try { recognition.start(); } catch(err) {}
+              }
+            }, 400);
+          }
+        };
 
-      return true;
+        return true;
+      } catch(e) {
+        alert("Ошибка инициализации распознавания речи: " + e.message);
+        return false;
+      }
     }
 
     function startListening(mode, lang) {
       if (!recognition) {
         if (!initSpeech()) return;
       }
-      
       stopListening();
 
       isListening = true;
@@ -433,7 +431,9 @@
       updateUIState();
       try {
         recognition.start();
-      } catch(e) {}
+      } catch(e) {
+        console.error("Start error:", e);
+      }
     }
 
     function stopListening() {
@@ -581,7 +581,6 @@
       document.getElementById('inputDrawer').classList.toggle('active');
     }
 
-    /* CORS-безопасный переводчик MyMemory с Google Translate Fallback */
     async function translateText(text, sl, tl) {
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sl}|${tl}`;
@@ -603,15 +602,14 @@
       }
     }
 
-    /* Озвучка с зашитой защитой от речевой петли */
     function speak(text, langCode) {
       if (!('speechSynthesis' in window)) return;
       
-      window.speechSynthesis.cancel();
+      try { window.speechSynthesis.cancel(); } catch(e){}
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = langCode;
 
-      const targetVoice = voices.find(v => v.lang.startsWith(langCode.substring(0, 2)) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')));
+      const targetVoice = voices.find(v => v.lang && v.lang.startsWith(langCode.substring(0, 2)) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')));
       if (targetVoice) utterance.voice = targetVoice;
 
       utterance.rate = 0.95;
@@ -638,7 +636,7 @@
         isSpeakingTTS = false;
       };
 
-      window.speechSynthesis.speak(utterance);
+      try { window.speechSynthesis.speak(utterance); } catch(e){}
     }
 
     async function sendText() {
