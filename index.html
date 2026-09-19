@@ -2,323 +2,636 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Parlé — Живой переводчик</title>
-  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Parlé — Переводчик</title>
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#121215">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background-color: #121215; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      background-color: #121215;
+      color: #f3f3f5;
+      overflow: hidden;
+    }
+
+    body { display: flex; flex-direction: column; }
     
     /* Header */
-    .header { padding: 16px; display: flex; justify-content: space-between; align-items: center; background: #121215; border-bottom: 1px solid #222; }
-    .header-title { font-size: 14px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; }
-    .main-title { font-size: 20px; font-weight: bold; margin-top: 2px; }
-    .sub-title { font-size: 12px; color: #8e8e93; }
-    .timer { font-size: 14px; color: #8e8e93; margin-right: 8px; }
-    .btn-finish { background: rgba(235, 87, 87, 0.2); color: #eb5757; border: none; padding: 6px 14px; border-radius: 16px; font-weight: 600; font-size: 13px; cursor: pointer; }
-    
-    /* Status bar */
-    .status-bar { padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #34c759; background: #121215; }
-    .status-dot { width: 8px; height: 8px; background: #34c759; border-radius: 50%; display: inline-block; }
-    
-    /* Main Content / Chat */
-    .chat-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .card { background: #1c1c1e; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
-    .card-meta { font-size: 11px; color: #8e8e93; text-transform: uppercase; font-weight: 600; }
-    .card-original { font-size: 15px; color: #ffffff; line-height: 1.3; }
-    .card-translated { font-size: 15px; color: #34c759; line-height: 1.3; }
-    
-    /* Bottom Controls */
-    .controls { padding: 16px; background: #121215; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #222; }
-    .top-controls { display: flex; gap: 10px; justify-content: flex-end; }
-    .btn-small { background: #2c2c2e; color: #fff; border: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; }
-    
-    .mic-buttons { display: flex; gap: 12px; }
-    .btn-speak { flex: 1; background: #f2efe9; color: #000000; border: none; padding: 18px; border-radius: 28px; font-size: 18px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; }
-    .btn-speak.active { background: #eb5757; color: #ffffff; animation: pulse 1.5s infinite; }
-    
-    .hint-text { text-align: center; font-size: 11px; color: #8e8e93; margin-top: 4px; }
-    
-    /* Bottom Navigation */
-    .nav-bar { display: flex; background: #1c1c1e; border-top: 1px solid #2c2c2e; padding: 8px 0; }
-    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #8e8e93; font-size: 10px; cursor: pointer; text-decoration: none; }
-    .nav-item.active { color: #ffffff; }
-    .nav-icon { font-size: 18px; }
+    header {
+      flex-shrink: 0;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1f1f24;
+      background: #121215;
+    }
+    .subtitle { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #8e8e93; font-weight: 700; margin-bottom: 2px; }
+    .title { font-size: 18px; font-weight: 600; letter-spacing: -0.4px; }
+    .lang-badge { font-size: 11px; color: #8e8e93; font-weight: 500; margin-top: 1px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .timer { font-size: 13px; font-weight: 500; color: #8e8e93; font-family: monospace; display: none; }
+    .end-btn { background: #26262e; border: 1px solid #32323e; color: #e55858; border-radius: 14px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: none; }
 
     /* Screens */
-    .screen { display: none; flex-direction: column; height: 100%; width: 100%; }
-    .screen.active { display: flex; }
-    
-    /* Home Screen */
-    .home-container { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; }
-    .home-title { font-size: 28px; font-weight: bold; line-height: 1.2; }
-    .home-card { background: #f2efe9; color: #000; border-radius: 20px; padding: 20px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
-    .home-card-dark { background: #1c1c1e; color: #fff; border-radius: 20px; padding: 20px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; border: 1px solid #2c2c2e; }
-    .home-card-title { font-size: 20px; font-weight: bold; }
-    .home-card-desc { font-size: 13px; opacity: 0.8; }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(235, 87, 87, 0.4); }
-      70% { box-shadow: 0 0 0 12px rgba(235, 87, 87, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(235, 87, 87, 0); }
+    .screen {
+      flex: 1;
+      min-height: 0;
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
     }
+    .screen.active { display: flex; }
+
+    /* Home Screen */
+    .home-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #636366; font-weight: 700; margin-bottom: 12px; }
+    .home-title { font-size: 26px; font-weight: 500; line-height: 1.25; letter-spacing: -0.5px; margin-bottom: 12px; color: #f3f3f5; }
+    .home-desc { font-size: 13px; color: #8e8e93; line-height: 1.5; margin-bottom: 24px; }
+    
+    .home-card { border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; cursor: pointer; }
+    .home-card.primary { background: #e6dfd5; color: #121215; }
+    .home-card.secondary { background: #1c1c22; border: 1px solid #282830; color: #f3f3f5; }
+    
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .card-icon { font-size: 20px; }
+    .card-badge { font-size: 11px; font-weight: 600; opacity: 0.6; text-transform: uppercase; }
+    .card-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.3px; }
+    .card-sub { font-size: 12px; opacity: 0.75; line-height: 1.3; }
+
+    /* Active Session Screen */
+    .status-banner {
+      flex-shrink: 0;
+      background: #1a1a20;
+      border: 1px solid #262630;
+      border-radius: 16px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #8e8e93;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #38d399; display: inline-block; margin-right: 6px; }
+    .status-dot.active { background: #e55858; animation: pulse 1.2s infinite; }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    .chat-list { flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-bottom: 8px; }
+    .msg-card { background: #1c1c22; border-radius: 14px; padding: 12px 14px; border: 1px solid #282830; }
+    .msg-header { font-size: 10px; text-transform: uppercase; color: #8e8e93; font-weight: 700; margin-bottom: 4px; }
+    .msg-orig { font-size: 14px; color: #e1e1e6; margin-bottom: 4px; }
+    .msg-trans { font-size: 15px; font-weight: 500; color: #38d399; }
+
+    .action-box {
+      flex-shrink: 0;
+      background: #18181d;
+      border: 1px solid #24242c;
+      border-radius: 20px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .top-actions { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .pill-btn { background: #22222a; border: 1px solid #32323e; color: #d1d1d6; padding: 8px 12px; border-radius: 16px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .pill-btn.active { background: #e55858; color: #fff; border-color: #e55858; }
+
+    /* Single Button (Звонок) */
+    .main-speak-btn { 
+      width: 100%; 
+      height: 50px; 
+      border-radius: 25px; 
+      background: #e6dfd5; 
+      color: #121215; 
+      border: none; 
+      font-size: 15px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+    }
+    .main-speak-btn.active { background: #e55858; color: #ffffff; }
+
+    /* Dual Buttons (Очно) */
+    .two-btn-row { display: flex; gap: 10px; width: 100%; }
+    .half-speak-btn {
+      flex: 1;
+      height: 50px;
+      border-radius: 25px;
+      background: #e6dfd5;
+      color: #121215;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .half-speak-btn.active { background: #e55858; color: #ffffff; }
+
+    .hint-sub { text-align: center; font-size: 11px; color: #72727a; margin-top: 1px; }
+
+    .input-drawer { display: none; gap: 6px; margin-bottom: 4px; }
+    .input-drawer.active { display: flex; }
+    .text-input { flex: 1; background: #22222a; border: 1px solid #32323e; border-radius: 10px; padding: 8px 10px; color: #fff; font-size: 13px; outline: none; }
+    .send-btn { background: #32323e; color: #fff; border: none; border-radius: 10px; padding: 0 12px; font-size: 12px; cursor: pointer; }
+
+    /* Phrases Screen */
+    .phrases-header { margin-bottom: 12px; }
+    .phrases-header h2 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+    .phrases-header p { font-size: 12px; color: #8e8e93; line-height: 1.4; }
+    .phrase-cat { font-size: 12px; font-weight: 600; color: #8e8e93; margin: 10px 0 6px; text-transform: uppercase; }
+    .phrase-card { background: #1c1c22; border: 1px solid #282830; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .phrase-ru { font-size: 13px; color: #f3f3f5; font-weight: 500; margin-bottom: 2px; }
+    .phrase-fr { font-size: 11px; color: #8e8e93; }
+    .play-icon { width: 28px; height: 28px; border-radius: 50%; background: #262630; display: flex; align-items: center; justify-content: center; color: #f3f3f5; flex-shrink: 0; font-size: 12px; }
+
+    /* Bottom Navigation Bar */
+    nav {
+      flex-shrink: 0;
+      background: #121215;
+      border-top: 1px solid #1f1f24;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    }
+    .nav-item { background: none; border: none; color: #636366; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; cursor: pointer; }
+    .nav-item.active { color: #f3f3f5; }
+    .nav-icon { width: 18px; height: 18px; fill: currentColor; }
   </style>
 </head>
 <body>
 
-  <!-- Экран 1: Главное меню -->
-  <div id="screen-home" class="screen active">
-    <div class="home-container">
-      <div style="color: #8e8e93; font-size: 12px; font-weight: 600;">РУССКИЙ · FRANÇAIS</div>
-      <h1 class="home-title">Говорите по-русски.<br>Они слышат французский.</h1>
-      
-      <div class="home-card" onclick="startCallMode()">
-        <div class="home-card-title">Начать звонок</div>
-        <div class="home-card-desc">Телефонный разговор с автоматическим переводом на лету (RU ↔ FR)</div>
-      </div>
+  <!-- HEADER -->
+  <header>
+    <div>
+      <div class="subtitle" id="headerSub">ПЕРЕВОДЧИК PARLÉ</div>
+      <div class="title" id="headerTitle">Главное меню</div>
+      <div class="lang-badge" id="langBadge">RU ➔ FR</div>
+    </div>
+    <div class="header-right">
+      <div class="timer" id="timer">0:00</div>
+      <button class="end-btn" id="endCallBtn" onclick="endSession()">Завершить</button>
+    </div>
+  </header>
 
-      <div class="home-card-dark" onclick="startCallMode()">
-        <div class="home-card-title">Очно</div>
-        <div class="home-card-desc">Личная беседа тет-а-тет с одного смартфона</div>
+  <!-- SCREEN 1: HOME -->
+  <div class="screen active" id="screenHome">
+    <div class="home-tag">РУССКИЙ · FRANÇAIS</div>
+    <h1 class="home-title">Говорите по-русски.<br>Они слышат французский.</h1>
+    <p class="home-desc">Живой перевод телефонного разговора. Наушники — вам, динамик телефона — собеседнику. Как устный переводчик, только в кармане.</p>
+
+    <div class="home-card primary" onclick="startSession('phone')">
+      <div class="card-top">
+        <span class="card-icon">📞</span>
+        <span class="card-badge">RU ➔ FR</span>
       </div>
+      <div class="card-title">Начать звонок</div>
+      <div class="card-sub">Громкая связь + наушники. Перевод на лету.</div>
+    </div>
+
+    <div class="home-card secondary" onclick="startSession('face')">
+      <div class="card-top">
+        <span class="card-icon">👥</span>
+        <span class="card-badge">RU ↔ FR</span>
+      </div>
+      <div class="card-title">Очно</div>
+      <div class="card-sub">Два человека, один телефон</div>
     </div>
   </div>
 
-  <!-- Экран 2: Разговор -->
-  <div id="screen-call" class="screen">
-    <div class="header">
+  <!-- SCREEN 2: ACTIVE SESSION -->
+  <div class="screen" id="screenCall">
+    <div class="status-banner">
+      <span id="statusText"><span class="status-dot" id="statusDot"></span>Готов к работе</span>
+      <span style="font-size: 14px;">🎧 🔊</span>
+    </div>
+
+    <div class="chat-list" id="chat">
+      <div class="msg-card">
+        <div class="msg-header" id="modeNoticeHeader">ИНСТРУКЦИЯ</div>
+        <div class="msg-orig" id="modeNoticeText">Поставьте звонок на громкую связь. Наушники — вам, динамик — собеседнику.</div>
+      </div>
+    </div>
+
+    <div class="action-box">
+      <div class="input-drawer" id="inputDrawer">
+        <input type="text" class="text-input" id="textInput" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter') sendText()">
+        <button class="send-btn" onclick="sendText()">Отправить</button>
+      </div>
+
+      <div class="top-actions">
+        <button class="pill-btn" id="btnListenThem" onclick="toggleListenFR()">
+          <span>🎙️</span> <span id="listenLabel">Слушать их</span>
+        </button>
+        <button class="pill-btn" onclick="toggleKeyboard()">⌨️</button>
+        <button class="pill-btn" onclick="sayIntro()">Представиться</button>
+      </div>
+
+      <div id="phoneControlBox">
+        <button class="main-speak-btn" id="speakBtn" onclick="toggleSpeakRU()">Говорите</button>
+      </div>
+
+      <div id="faceControlBox" class="two-btn-row" style="display: none;">
+        <button class="half-speak-btn" id="btnFaceRU" onclick="toggleFaceRU()">Я</button>
+        <button class="half-speak-btn" id="btnFaceFR" onclick="toggleFaceFR()">France</button>
+      </div>
+
+      <div class="hint-sub" id="hintSub">Вы — RU. Им уйдёт FR в динамик.</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: PHRASES -->
+  <div class="screen" id="screenPhrases">
+    <div class="phrases-header">
+      <h2>Готовые фразы</h2>
+      <p>Нажмите, чтобы произнести по-французски в динамик.</p>
+    </div>
+
+    <div class="phrase-cat">Начало звонка</div>
+    
+    <div class="phrase-card" onclick="playPhrase('Bonjour. Je parle encore mal français. Un traducteur va parler pour moi. Pouvez-vous parler un peu plus lentement, s\'il vous plaît ?')">
       <div>
-        <div class="header-title">Разговор очно</div>
-        <div class="main-title">Очный перевод</div>
-        <div class="sub-title">RU ↔ FR</div>
+        <div class="phrase-ru">Здравствуйте. Я ещё плохо говорю по-французски. Сейчас за меня будет говорить переводчик. Пожалуйста, говорите чуть медленнее.</div>
+        <div class="phrase-fr">Bonjour. Je parle encore mal français...</div>
       </div>
-      <div style="display:flex; align-items:center;">
-        <span class="timer" id="call-timer">0:00</span>
-        <button class="btn-finish" onclick="stopCallMode()">Завершить</button>
-      </div>
+      <div class="play-icon">▶</div>
     </div>
 
-    <div class="status-bar">
-      <span class="status-dot"></span>
-      <span id="status-text">Готов к работе (Мгновенный перевод)</span>
+    <div class="phrase-card" onclick="playPhrase('Vous pouvez parler français, j\'écoute la traduction.')">
+      <div>
+        <div class="phrase-ru">Можно по-французски, я слушаю перевод на экране.</div>
+        <div class="phrase-fr">Vous pouvez parler français, j'écoute la traduction.</div>
+      </div>
+      <div class="play-icon">▶</div>
     </div>
 
-    <div class="chat-container" id="chat">
-      <!-- Карточки сообщений появляются здесь -->
+    <div class="phrase-card" onclick="playPhrase('Pouvez-vous parler plus lentement, s\'il vous plaît ?')">
+      <div>
+        <div class="phrase-ru">Говорите, пожалуйста, медленнее.</div>
+        <div class="phrase-fr">Pouvez-vous parler plus lentement, s'il vous plaît ?</div>
+      </div>
+      <div class="play-icon">▶</div>
     </div>
 
-    <div class="controls">
-      <div class="top-controls">
-        <button class="btn-small" onclick="sendIntro()">Представиться</button>
+    <div class="phrase-card" onclick="playPhrase('Pouvez-vous répéter, s\'il vous plaît ?')">
+      <div>
+        <div class="phrase-ru">Повторите, пожалуйста.</div>
+        <div class="phrase-fr">Pouvez-vous répéter, s'il vous plaît ?</div>
       </div>
-      
-      <div class="mic-buttons">
-        <button id="btn-toggle-speak" class="btn-speak" onclick="toggleInstantTranslate()">Говорить</button>
-      </div>
-      <div class="hint-text">Мгновенный перевод: автоматически распознаёт RU и FR</div>
+      <div class="play-icon">▶</div>
     </div>
   </div>
 
-  <!-- Нижнее меню навигации -->
-  <div class="nav-bar">
-    <div class="nav-item active" onclick="showScreen('home')">
-      <div class="nav-icon">📞</div>
-      <div>ЗВОНОК</div>
+  <!-- SCREEN 4: JOURNAL -->
+  <div class="screen" id="screenJournal">
+    <div class="phrases-header">
+      <h2>Журнал разговоров</h2>
+      <p>История ваших переводов за текущую сессию.</p>
     </div>
-    <div class="nav-item" onclick="alert('Раздел Фразы')">
-      <div class="nav-icon">💬</div>
-      <div>ФРАЗЫ</div>
+    <div class="chat-list" id="journalList"></div>
+  </div>
+
+  <!-- SCREEN 5: HOW IT WORKS -->
+  <div class="screen" id="screenHow">
+    <div class="phrases-header">
+      <h2>Как это работает</h2>
+      <p>Инструкция для звонков по Франции без знания языка.</p>
     </div>
-    <div class="nav-item" onclick="alert('Журнал пуст')">
-      <div class="nav-icon">🕒</div>
-      <div>ЖУРНАЛ</div>
+    <div class="msg-card" style="margin-bottom: 8px;">
+      <div class="msg-header">1. НАУШНИКИ</div>
+      <div class="msg-orig">Наденьте Bluetooth-наушники — туда пойдёт перевод на русский язык.</div>
     </div>
-    <div class="nav-item" onclick="alert('Приложение автоматически переводит русскую и французскую речь во время разговора.')">
-      <div class="nav-icon">ℹ️</div>
-      <div>КАК ЭТО</div>
+    <div class="msg-card" style="margin-bottom: 8px;">
+      <div class="msg-header">2. ГРОМКАЯ СВЯЗЬ</div>
+      <div class="msg-orig">Позвоните французу и включите динамик смартфона (громкую связь).</div>
+    </div>
+    <div class="msg-card">
+      <div class="msg-header">3. ПЕРЕВОД</div>
+      <div class="msg-orig">Нажмите «Представиться» в начале звонка. Нажмите «Говорите», чтобы запустить перевод.</div>
     </div>
   </div>
+
+  <!-- NAVIGATION BAR -->
+  <nav>
+    <button class="nav-item active" id="navBtnCall" onclick="switchTab('Call')">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.11-.27c1.12.44 2.33.68 3.58.68a1 1 0 011 1V20a1 1 0 01-1 1C10.07 21 3 13.93 3 5a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.24 2.46.68 3.58a1 1 0 01-.27 1.12l-2.29 2.29z"/></svg>
+      ЗВОНОК
+    </button>
+    <button class="nav-item" id="navBtnPhrases" onclick="switchTab('Phrases')">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+      ФРАЗЫ
+    </button>
+    <button class="nav-item" id="navBtnJournal" onclick="switchTab('Journal')">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      ЖУРНАЛ
+    </button>
+    <button class="nav-item" id="navBtnHow" onclick="switchTab('How')">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      КАК ЭТО
+    </button>
+  </nav>
 
   <script>
-    let isListening = false;
-    let recognition = null;
+    let activeSession = false;
+    let sessionType = 'phone';
+    let activeMode = null; // 'RU', 'FR', or null
+    let isSpeakingTTS = false;
+    let seconds = 0;
     let timerInterval = null;
-    let secondsElapsed = 0;
+    let voices = [];
 
     // Инициализация Web Speech API
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      
-      recognition.onresult = async (event) => {
-        const lastResultIndex = event.results.length - 1;
-        const transcript = event.results[lastResultIndex][0].transcript.trim();
-        
-        if (transcript.length > 0) {
-          await handleAutoTranslation(transcript);
-        }
-      };
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
 
-      recognition.onerror = (e) => {
-        console.error('Speech recognition error:', e.error);
-        if (isListening && e.error !== 'no-speech') {
-          restartRecognition();
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onresult = async (event) => {
+        const text = event.results[0][0].transcript;
+        if (!text || !text.trim()) return;
+
+        const mode = activeMode;
+        if (mode === 'FR') {
+          const translated = await translateText(text, 'fr', 'ru');
+          addMsg('СОБЕСЕДНИК · FR', text, translated);
+          speak(translated, 'ru-RU');
+        } else if (mode === 'RU') {
+          const translated = await translateText(text, 'ru', 'fr');
+          addMsg('ВЫ · RU', text, translated);
+          speak(translated, 'fr-FR');
         }
       };
 
       recognition.onend = () => {
-        if (isListening) {
-          restartRecognition();
+        if (activeMode && !isSpeakingTTS) {
+          setTimeout(() => {
+            if (activeMode && !isSpeakingTTS) {
+              try { recognition.start(); } catch(e) {}
+            }
+          }, 250);
+        } else {
+          updateUIState();
         }
       };
-    } else {
-      alert('Ваш браузер не поддерживает распознавание речи.');
+
+      recognition.onerror = () => {
+        if (activeMode && !isSpeakingTTS) {
+          setTimeout(() => {
+            if (activeMode && !isSpeakingTTS) {
+              try { recognition.start(); } catch(e) {}
+            }
+          }, 400);
+        } else {
+          updateUIState();
+        }
+      };
     }
 
-    function restartRecognition() {
-      try {
-        recognition.start();
-      } catch (e) {
-        setTimeout(() => { if (isListening) recognition.start(); }, 300);
+    function loadVoices() {
+      if ('speechSynthesis' in window) {
+        try { voices = window.speechSynthesis.getVoices(); } catch(e){}
       }
     }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
 
-    // Переключение экранов
-    function showScreen(screen) {
-      document.getElementById('screen-home').classList.remove('active');
-      document.getElementById('screen-call').classList.remove('active');
-      if (screen === 'home') {
-        document.getElementById('screen-home').classList.add('active');
-        stopCallMode();
+    // Запуск/Остановка режимов
+    function toggleMode(mode, lang) {
+      if (!recognition) {
+        alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome.');
+        return;
+      }
+
+      if (activeMode === mode) {
+        activeMode = null;
+        try { recognition.stop(); } catch(e){}
+        updateUIState();
       } else {
-        document.getElementById('screen-call').classList.add('active');
+        activeMode = mode;
+        recognition.lang = lang;
+        updateUIState();
+        try { recognition.start(); } catch(e){}
       }
     }
 
-    function startCallMode() {
-      showScreen('call');
-      secondsElapsed = 0;
-      clearInterval(timerInterval);
+    function toggleSpeakRU() { toggleMode('RU', 'ru-RU'); }
+    function toggleListenFR() { toggleMode('FR', 'fr-FR'); }
+    function toggleFaceRU() { toggleMode('RU', 'ru-RU'); }
+    function toggleFaceFR() { toggleMode('FR', 'fr-FR'); }
+
+    // Защищенная функция обновления интерфейса (без ошибок в консоли)
+    function updateUIState() {
+      const speakBtn = document.getElementById('speakBtn');
+      const btnListenThem = document.getElementById('btnListenThem');
+      const btnFaceRU = document.getElementById('btnFaceRU');
+      const btnFaceFR = document.getElementById('btnFaceFR');
+      const statusDot = document.getElementById('statusDot');
+      const statusText = document.getElementById('statusText');
+
+      if (!speakBtn || !statusText) return;
+
+      speakBtn.classList.remove('active');
+      if (btnListenThem) btnListenThem.classList.remove('active');
+      if (btnFaceRU) btnFaceRU.classList.remove('active');
+      if (btnFaceFR) btnFaceFR.classList.remove('active');
+      if (statusDot) statusDot.classList.remove('active');
+
+      if (activeMode === 'RU') {
+        speakBtn.classList.add('active');
+        if (btnFaceRU) btnFaceRU.classList.add('active');
+        speakBtn.innerText = 'Запись... (Нажмите стоп)';
+        if (statusDot) statusDot.classList.add('active');
+        statusText.innerHTML = `<span class="status-dot active"></span>Слушаю вас (RU)...`;
+      } else if (activeMode === 'FR') {
+        if (btnListenThem) btnListenThem.classList.add('active');
+        if (btnFaceFR) btnFaceFR.classList.add('active');
+        speakBtn.innerText = 'Говорите';
+        if (statusDot) statusDot.classList.add('active');
+        statusText.innerHTML = `<span class="status-dot active"></span>Слушаю французский (FR)...`;
+      } else {
+        speakBtn.innerText = 'Говорите';
+        statusText.innerHTML = `<span class="status-dot"></span>Готов к работе`;
+      }
+    }
+
+    // Переключение вкладок
+    function switchTab(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+      if (name === 'Call') {
+        const target = activeSession ? 'screenCall' : 'screenHome';
+        document.getElementById(target).classList.add('active');
+        document.getElementById('navBtnCall').classList.add('active');
+      } else {
+        document.getElementById(`screen${name}`).classList.add('active');
+        document.getElementById(`navBtn${name}`).classList.add('active');
+      }
+    }
+
+    // Старт сессии
+    function startSession(type) {
+      sessionType = type;
+      activeSession = true;
+
+      document.getElementById('headerSub').innerText = type === 'phone' ? 'ТЕЛЕФОННЫЙ ЗВОНОК' : 'РАЗГОВОР ОЧНО';
+      document.getElementById('headerTitle').innerText = type === 'phone' ? 'Линия открыта' : 'Очный перевод';
+      document.getElementById('endCallBtn').style.display = 'block';
+
+      if (type === 'phone') {
+        document.getElementById('btnListenThem').style.display = 'flex';
+        document.getElementById('phoneControlBox').style.display = 'block';
+        document.getElementById('faceControlBox').style.display = 'none';
+        document.getElementById('modeNoticeHeader').innerText = 'ИНСТРУКЦИЯ';
+        document.getElementById('modeNoticeText').innerText = 'Поставьте звонок на громкую связь. Наушники — вам, динамик — собеседнику.';
+      } else {
+        document.getElementById('btnListenThem').style.display = 'none';
+        document.getElementById('phoneControlBox').style.display = 'none';
+        document.getElementById('faceControlBox').style.display = 'flex';
+        document.getElementById('modeNoticeHeader').innerText = 'ОЧНЫЙ РЕЖИМ';
+        document.getElementById('modeNoticeText').innerText = 'Положите телефон между вами. Нажимайте свою кнопку перед фразой.';
+      }
+
+      startTimer();
+      switchTab('Call');
+    }
+
+    function endSession() {
+      activeSession = false;
+      activeMode = null;
+      if (recognition) try { recognition.stop(); } catch(e){}
+      stopTimer();
+      
+      document.getElementById('headerSub').innerText = 'ПЕРЕВОДЧИК PARLÉ';
+      document.getElementById('headerTitle').innerText = 'Главное меню';
+      document.getElementById('endCallBtn').style.display = 'none';
+      switchTab('Call');
+    }
+
+    function startTimer() {
+      seconds = 0;
+      document.getElementById('timer').innerText = "0:00";
+      document.getElementById('timer').style.display = 'block';
+      if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(() => {
-        secondsElapsed++;
-        const mins = Math.floor(secondsElapsed / 60);
-        const secs = secondsElapsed % 60;
-        document.getElementById('call-timer').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        seconds++;
+        const m = Math.floor(seconds / 60);
+        const s = String(seconds % 60).padStart(2, '0');
+        document.getElementById('timer').innerText = `${m}:${s}`;
       }, 1000);
     }
 
-    function stopCallMode() {
-      clearInterval(timerInterval);
-      if (isListening) {
-        toggleInstantTranslate();
-      }
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      document.getElementById('timer').style.display = 'none';
     }
 
-    // Включение/выключение мгновенного перевода (Кнопка "Говорить")
-    function toggleInstantTranslate() {
-      const btn = document.getElementById('btn-toggle-speak');
-      const status = document.getElementById('status-text');
-
-      if (!isListening) {
-        isListening = true;
-        btn.classList.add('active');
-        btn.innerText = 'Слушаю...';
-        status.innerText = 'Мгновенный перевод включен (RU ↔ FR)';
-        try {
-          recognition.start();
-        } catch(e) {
-          restartRecognition();
-        }
-      } else {
-        isListening = false;
-        btn.classList.remove('active');
-        btn.innerText = 'Говорить';
-        status.innerText = 'Готов к работе';
-        try {
-          recognition.stop();
-        } catch(e) {}
-      }
+    function toggleKeyboard() {
+      document.getElementById('inputDrawer').classList.toggle('active');
     }
 
-    // Автоопределение языка фразы и перевод
-    async function handleAutoTranslation(text) {
-      // Если содержит кириллицу -> считаем, что сказано по-русски
-      const isRussian = /[а-яА-ЯёЁ]/.test(text);
-      const sourceLang = isRussian ? 'ru' : 'fr';
-      const targetLang = isRussian ? 'fr' : 'ru';
-      const speakerTag = isRussian ? 'ВЫ · ПРЕДСТАВЛЕНИЕ' : 'СОБЕСЕДНИК · FR';
-
-      // Временно приостанавливаем слух, чтобы не улавливать собственный динамик
-      if (recognition) recognition.stop();
-
-      const translatedText = await translateText(text, sourceLang, targetLang);
-      
-      addCardToChat(speakerTag, text, translatedText);
-      speakText(translatedText, targetLang, () => {
-        // Возобновляем слух после завершения озвучки
-        if (isListening) {
-          restartRecognition();
-        }
-      });
-    }
-
-    // Google Translate API (Бесплатный шлюз)
-    async function translateText(text, from, to) {
+    // Рабочий Google Translate API
+    async function translateText(text, sl, tl) {
       try {
-        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`);
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`);
         const data = await res.json();
-        return data[0][0][0];
-      } catch (err) {
-        console.error('Translation Error:', err);
-        return text;
+        if (data && data[0]) {
+          return data[0].map(item => item[0]).join('');
+        }
+        return "Ошибка перевода";
+      } catch (e) {
+        return "Ошибка соединения";
       }
     }
 
-    // Озвучка через SpeechSynthesis
-    function speakText(text, lang, onEndCallback) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang === 'fr' ? 'fr-FR' : 'ru-RU';
-        utterance.rate = 0.9;
-        
-        utterance.onend = () => { if (onEndCallback) onEndCallback(); };
-        utterance.onerror = () => { if (onEndCallback) onEndCallback(); };
+    // Озвучка речи
+    function speak(text, langCode) {
+      if (!('speechSynthesis' in window)) return;
+      
+      try { window.speechSynthesis.cancel(); } catch(e){}
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = langCode;
 
-        window.speechSynthesis.speak(utterance);
-      } else {
-        if (onEndCallback) onEndCallback();
-      }
+      const targetVoice = voices.find(v => v.lang && v.lang.startsWith(langCode.substring(0, 2)) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')));
+      if (targetVoice) utterance.voice = targetVoice;
+
+      utterance.rate = 0.95;
+
+      utterance.onstart = () => {
+        isSpeakingTTS = true;
+        if (recognition) try { recognition.stop(); } catch(e){}
+      };
+
+      utterance.onend = () => {
+        isSpeakingTTS = false;
+        if (activeMode) {
+          setTimeout(() => {
+            if (activeMode) try { recognition.start(); } catch(e){}
+          }, 300);
+        }
+      };
+
+      utterance.onerror = () => { isSpeakingTTS = false; };
+
+      try { window.speechSynthesis.speak(utterance); } catch(e){}
     }
 
-    // Добавление карточки в чат
-    function addCardToChat(meta, original, translated) {
+    async function sendText() {
+      const input = document.getElementById('textInput');
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = '';
+      const translated = await translateText(val, 'ru', 'fr');
+      addMsg('ВЫ · RU', val, translated);
+      speak(translated, 'fr-FR');
+    }
+
+    function sayIntro() {
+      const fr = "Bonjour. Je parle encore mal français. Un traducteur va parler pour moi. Pouvez-vous parler un peu plus lentement, s'il vous plaît ?";
+      const ru = "Здравствуйте. Я ещё плохо говорю по-французски. Сейчас за меня будет говорить переводчик. Пожалуйста, говорите чуть медленнее.";
+      addMsg('ВЫ · ПРЕДСТАВЛЕНИЕ', ru, fr);
+      speak(fr, 'fr-FR');
+    }
+
+    function playPhrase(frText) {
+      speak(frText, 'fr-FR');
+      if (!activeSession) startSession('phone');
+      addMsg('ОЗВУЧЕНО ИЗ ФРАЗ', 'Готовая фраза', frText);
+    }
+
+    function addMsg(author, orig, trans) {
       const chat = document.getElementById('chat');
+      const journal = document.getElementById('journalList');
+      
       const card = document.createElement('div');
-      card.className = 'card';
+      card.className = 'msg-card';
       card.innerHTML = `
-        <div class="card-meta">${meta}</div>
-        <div class="card-original">${original}</div>
-        <div class="card-translated">${translated}</div>
+        <div class="msg-header">${author}</div>
+        <div class="msg-orig">${orig}</div>
+        <div class="msg-trans">${trans}</div>
       `;
       chat.appendChild(card);
+      journal.appendChild(card.cloneNode(true));
       chat.scrollTop = chat.scrollHeight;
     }
 
-    // Кнопка Представиться
-    function sendIntro() {
-      const ruText = "Здравствуйте. Я ещё плохо говорю по-французски. Сейчас за меня будет говорить переводчик. Пожалуйста, говорите чуть медленнее.";
-      const frText = "Bonjour. Je parle encore mal français. Un traducteur va parler pour moi. Pouvez-vous parler un peu plus lentement, s'il vous plaît ?";
-      
-      addCardToChat('ВЫ · ПРЕДСТАВЛЕНИЕ', ruText, frText);
-      
-      if (recognition) recognition.stop();
-      speakText(frText, 'fr', () => {
-        if (isListening) restartRecognition();
-      });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
     }
   </script>
 </body>
