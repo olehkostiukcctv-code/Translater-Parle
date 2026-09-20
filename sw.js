@@ -1,4 +1,4 @@
-const CACHE_NAME = 'parle-v7-groq';
+const CACHE_NAME = 'parle-v8-auto';
 const ASSETS = [
   '/',
   '/index.html',
